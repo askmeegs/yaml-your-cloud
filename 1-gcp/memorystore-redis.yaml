@@ -1,0 +1,11 @@
+  apiVersion: redis.cnrm.cloud.google.com/v1beta1
+  kind: RedisInstance
+  metadata:
+    name: redis-cart
+    namespace: config-connector-resources
+  spec:
+    displayName: "Cymbal Shops Redis Cart"
+    region: us-central1
+    redisVersion: "REDIS_5_0"
+    tier: BASIC
+    memorySizeGb: 1
