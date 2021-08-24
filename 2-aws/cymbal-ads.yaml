@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cymbal-ads
+  namespace: cymbal-ads
+spec:
+  selector:
+    matchLabels:
+      app: cymbal-ads
+  template:
+    metadata:
+      labels:
+        app: cymbal-ads
+      annotations:
+        sidecar.istio.io/rewriteAppHTTPProbers: "true"
+    spec:
+      serviceAccountName: cymbal-ads-air
+      containers:
+        - name: server
+          image: gcr.io/yaml-your-cloud/cymbal-ads:v0.0.2
+          ports:
+          - containerPort: 8080
+          env:
+          - name: PORT
+            value: "8080"
+          - name: BUCKET_NAME
+            value: "cymbal-test-2"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cymbal-ads
+  namespace: cymbal-ads
+spec:
+  type: LoadBalancer
+  selector:
+    app: cymbal-ads
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080

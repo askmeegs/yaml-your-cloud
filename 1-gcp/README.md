@@ -1,5 +1,7 @@
 #  Part 1 - Managing Google Cloud Resources with Config Connector 
 
+![](/images/gcp.png)
+
 ## Install prerequisites 
 
 - gcloud SDK
