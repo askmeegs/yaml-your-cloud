@@ -71,8 +71,8 @@ https://aws-controllers-k8s.github.io/community/user-docs/install/
 ```
 export HELM_EXPERIMENTAL_OCI=1
 export SERVICE=s3
-export RELEASE_VERSION=v0.0.1
-export CHART_EXPORT_PATH=/tmp/chart
+export RELEASE_VERSION=v0.0.3
+export CHART_EXPORT_PATH=/tmp/chart/v0.0.3
 export CHART_REPO=public.ecr.aws/aws-controllers-k8s/$SERVICE-chart
 export CHART_REF=$CHART_REPO:$RELEASE_VERSION
 
@@ -96,9 +96,9 @@ kubectl create namespace ack-system
 4. Install the Helm chart for the S3 controller to the ack-system namespace in EKS. 
 
 ```
-helm install --namespace $ACK_K8S_NAMESPACE ack-$SERVICE-controller \
-    -f $CHART_EXPORT_PATH/ack-$SERVICE-controller/values.yaml \
-    $CHART_EXPORT_PATH/ack-$SERVICE-controller
+helm install --namespace ack-system ack-s3-controller \
+-f /tmp/chart/v0.0.3/s3-chart/values.yaml \
+/tmp/chart/v0.0.3/s3-chart
 ```
 
 ## Create an S3 Bucket using ACK 
