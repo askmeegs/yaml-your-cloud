@@ -41,61 +41,37 @@ kubectl get all -n ${NAMESPACE}
 
 ## Install cloud resource specific Crossplane configurations into the cluster
 
-- Replace the `NAMESPACE` in the `composition.yaml` file
+- Install the provider configuration
 ```sh
-mkdir crossplane-config
-cd crossplane-config
-sed -i -e "s/NAMESPACE/${NAMESPACE}/g" composition.yaml
-```
-
-- Build and push the configuration to `Google Container Registry`
-```sh
-# first enable the gcr API
-gcloud services enable containerregistry.googleapis.com
-# build the Crossplane configuration
-kubectl crossplane build configuration
-# finally push it to gcr
-kubectl crossplane push configuration gcr.io/$PROJECT_ID/getting-started-with-gcp:v1.3.1
-```
-
-- Install the Crossplane configuration from the pushed image
-```sh
-kubectl crossplane install configuration gcr.io/$PROJECT_ID/getting-started-with-gcp:v1.3.1
-```
-
-- Validate the installation
-```sh
-# check until you see both `INSTALLED` and `READY` are True
-kubectl get pkg
-
-NAME                                                                       INSTALLED   HEALTHY   PACKAGE                                                  AGE
-configuration.pkg.crossplane.io/yaml-your-cloud-getting-started-with-gcp   True        True      gcr.io/yaml-your-cloud/getting-started-with-gcp:v1.3.1   30m
-
-NAME                                                 INSTALLED   HEALTHY   PACKAGE                           AGE
-provider.pkg.crossplane.io/crossplane-provider-gcp   True        True      crossplane/provider-gcp:v0.17.1   30m
+kubectl apply -f crossplane.yaml
 ```
 
 ## Configure Crossplane provider in the cluster
 - Create GCP service account
 ```sh
 SA="${NEW_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
-gcloud iam service-accounts create $NEW_SA_NAME --project $PROJECT_ID
+gcloud iam service-accounts create $NEW_SA_NAME --project ${PROJECT_ID}
 ```
 
 - Enable required APIs
 ```
-gcloud services enable sqladmin.googleapis.com --project $PROJECT_ID
+gcloud services enable redis.googleapis.com --project $PROJECT_ID
 ```
 
 - Grant the service-account access to the cloud API and download service-account key
 ```sh
-ROLE="roles/cloudsql.admin"
-gcloud projects add-iam-policy-binding --role="$ROLE" $PROJECT_ID --member "serviceAccount:$SA"
+ROLE="roles/redis.admin"
+gcloud projects add-iam-policy-binding --role="$ROLE" ${PROJECT_ID} --member "serviceAccount:$SA"
 ```
 
 - Create service account key file
 ```sh
-gcloud iam service-accounts keys create creds.json --project $PROJECT_ID --iam-account $SA
+gcloud iam service-accounts keys create creds.json --project ${PROJECT_ID} --iam-account $SA
+```
+
+- Create kubenetes secret to serve as the provider secret
+```sh
+kubectl create secret generic gcp-creds -n ${NAMESPACE} --from-file=creds=./creds.json
 ```
 
 - Create `ProviderConfig` for the Crossplane cloud provider
@@ -115,26 +91,25 @@ spec:
 ```
 
 ## Deploy Crossplane resources for Memorystore, IAM, and S3
-- Deploy a resource of type `PostgreSQLInstance` to your cluster
+- Deploy a resource of type `CloudMemorystoreInstance` to your cluster
 ```sh
-echo "apiVersion: database.example.org/v1alpha1
-kind: PostgreSQLInstance
+echo "apiVersion: cache.gcp.crossplane.io/v1beta1
+kind: CloudMemorystoreInstance
 metadata:
-  name: my-db
+  name: cymbal-memstore
   namespace: default
 spec:
-  parameters:
-    storageGB: 20
-  compositionSelector:
-    matchLabels:
-      provider: gcp
-  writeConnectionSecretToRef:
-    name: db-conn" | kubectl apply -f -
+  forProvider:
+    memorySizeGb: 50
+    region: us-central1
+    tier: BASIC" | kubectl apply -f -
 ```
 
 - Watch for changes and wait until the Postgres instance is ready
 ```sh
-kubectl get postgresqlinstance my-db
-kubectl get crossplane -l crossplane.io/claim-name=my-db
+kubectl get cloudmemorystoreinstance cymbal-memstore
+
+NAME              READY   SYNCED   STATE   VERSION     AGE
+cymbal-memstore   True    True     READY   REDIS_4_0   4m37s
 ```
 ## Verify Cymbal app functionality
