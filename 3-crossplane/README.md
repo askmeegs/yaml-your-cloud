@@ -41,9 +41,9 @@ kubectl get all -n ${NAMESPACE}
 
 ## Install cloud resource specific Crossplane configurations into the cluster
 
-- Install the provider configuration
+- Install the GCP provider
 ```sh
-kubectl apply -f crossplane.yaml
+kubectl apply -f gcp_provider.yaml
 ```
 
 ## Configure Crossplane provider in the cluster
@@ -93,16 +93,7 @@ spec:
 ## Deploy Crossplane resources for Memorystore, IAM, and S3
 - Deploy a resource of type `CloudMemorystoreInstance` to your cluster
 ```sh
-echo "apiVersion: cache.gcp.crossplane.io/v1beta1
-kind: CloudMemorystoreInstance
-metadata:
-  name: cymbal-memstore
-  namespace: default
-spec:
-  forProvider:
-    memorySizeGb: 2
-    region: us-central1
-    tier: BASIC" | kubectl apply -f -
+kubectl apply -f memory_store.yaml
 ```
 
 - Watch for changes and wait until the Postgres instance is ready

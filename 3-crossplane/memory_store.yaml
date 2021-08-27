@@ -1,0 +1,10 @@
+apiVersion: cache.gcp.crossplane.io/v1beta1
+kind: CloudMemorystoreInstance
+metadata:
+  name: cymbal-memstore-3
+  namespace: default
+spec:
+  forProvider:
+    memorySizeGb: 2
+    region: us-central1
+    tier: BASIC
