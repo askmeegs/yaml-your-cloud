@@ -74,20 +74,9 @@ gcloud iam service-accounts keys create creds.json --project ${PROJECT_ID} --iam
 kubectl create secret generic gcp-creds -n ${NAMESPACE} --from-file=creds=./creds.json
 ```
 
-- Create `ProviderConfig` for the Crossplane cloud provider
+- Setup configurations for the Crossplane GCP provider
 ```sh
-echo "apiVersion: gcp.crossplane.io/v1beta1
-kind: ProviderConfig
-metadata:
-  name: default
-spec:
-  projectID: ${PROJECT_ID}
-  credentials:
-    source: Secret
-    secretRef:
-      namespace: ${NAMESPACE}
-      name: gcp-creds
-      key: creds" | kubectl apply -f -
+kubectl apply -f gcp_provider_config.yaml
 ```
 
 ## Deploy Crossplane resources for Memorystore, IAM, and S3
