@@ -17,7 +17,7 @@ NAMESPACE=<CROSSPLANE_NAMESPACE> # name to install Crossplane components
 
 - Download and install the Crossplane CLI
 ```sh
-# this will run the installtion script and print some 'echo' commands; you should run them
+# this will run the installation script and print some 'echo' commands; you should run them
 curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh
 ```
 
@@ -100,7 +100,7 @@ metadata:
   namespace: default
 spec:
   forProvider:
-    memorySizeGb: 50
+    memorySizeGb: 2
     region: us-central1
     tier: BASIC" | kubectl apply -f -
 ```
