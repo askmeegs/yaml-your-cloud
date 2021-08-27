@@ -1,0 +1,7 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: RedisRequireVersion
+metadata:
+  name: redis-require-v5
+spec:
+  parameters:
+    allowedVersion: "REDIS_5_0"
