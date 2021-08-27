@@ -1,7 +1,7 @@
 apiVersion: cache.gcp.crossplane.io/v1beta1
 kind: CloudMemorystoreInstance
 metadata:
-  name: cymbal-memstore-3
+  name: cymbal-memstore
   namespace: default
 spec:
   forProvider:
