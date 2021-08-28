@@ -41,7 +41,6 @@ kubectl get all -n ${NAMESPACE}
 
 ## Install cloud resource specific Crossplane configurations into the cluster
 
-#### Install the GCP provider
 ```sh
 kubectl apply -f gcp/gcp_provider.yaml
 kubectl apply -f aws/aws_provider.yaml
