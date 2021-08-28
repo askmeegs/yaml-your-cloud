@@ -8,32 +8,32 @@
 
 ## Install Crossplane
 
-### Setup the environment variables
+#### Setup the environment variables
 ```sh
 PROJECT_ID=<YOUR_GCP_PROJECT>
 NEW_SA_NAME=<GCP_SERVICE_ACCOUNT> # give any name of your choice
 NAMESPACE=<CROSSPLANE_NAMESPACE> # name to install Crossplane components
 ```
 
-- Download and install the Crossplane CLI
+#### Download and install the Crossplane CLI
 ```sh
 # this will run the installation script and print some 'echo' commands; you should run them
 curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh
 ```
 
-- Create the namespace for the Crossplane components
+#### Create the namespace for the Crossplane components
 ```sh
 kubectl create namespace ${NAMESPACE}
 ```
 
-- Download the `helm charts` for the Crossplane CRDs and install using `helm`
+#### Download the `helm charts` for the Crossplane CRDs and install using `helm`
 ```
 helm repo add crossplane-stable https://charts.crossplane.io/stable
 helm repo update
 helm install crossplane --namespace $NAMESPACE crossplane-stable/crossplane --version 1.3.1
 ```
 
-- Verify that the components have been installed properly
+#### Verify that the components have been installed properly
 ```sh
 helm list -n ${NAMESPACE}
 kubectl get all -n ${NAMESPACE}
@@ -41,7 +41,7 @@ kubectl get all -n ${NAMESPACE}
 
 ## Install cloud resource specific Crossplane configurations into the cluster
 
-- Install the GCP provider
+#### Install the GCP provider
 ```sh
 kubectl apply -f gcp/gcp_provider.yaml
 kubectl apply -f aws/aws_provider.yaml
@@ -49,7 +49,7 @@ kubectl apply -f aws/aws_provider.yaml
 
 ## Configure Crossplane provider in the cluster
 
-### GCP
+#### GCP
 _(you should have gcloud configured to the correct GCP project)_
 ```sh
 # create GCP service account
@@ -68,13 +68,13 @@ gcloud projects add-iam-policy-binding --role="$ROLE" ${PROJECT_ID} --member "se
 gcloud iam service-accounts keys create gcp-creds.json --project ${PROJECT_ID} --iam-account $SA
 ```
 
-### AWS
+#### AWS
 _(you should have the aws CLI configured to the correct AWS profile)_
 ```sh
 AWS_PROFILE=default && echo -e "[default]\naws_access_key_id = $(aws configure get aws_access_key_id --profile $AWS_PROFILE)\naws_secret_access_key = $(aws configure get aws_secret_access_key --profile $AWS_PROFILE)" > aws-creds.conf
 ```
 
-- Create kubenetes secret to serve as the provider secret
+#### Create kubenetes secret to serve as the provider secret
 ```sh
 # for GCP provider
 kubectl create secret generic gcp-creds -n ${NAMESPACE} --from-file=creds=./gcp-creds.json
@@ -82,8 +82,9 @@ kubectl create secret generic gcp-creds -n ${NAMESPACE} --from-file=creds=./gcp-
 kubectl create secret generic aws-creds -n ${NAMESPACE} --from-file=creds=./aws-creds.conf
 ```
 
-- Setup configurations for the Crossplane GCP provider
+#### Setup configurations for the Crossplane providers (GCP & AWS)
 ```sh
+# for GCP provider
 echo "apiVersion: gcp.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
@@ -97,6 +98,7 @@ spec:
       name: gcp-creds
       key: creds" | kubectl apply -f -
 
+# for AWS provider
 echo "apiVersion: aws.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
@@ -111,12 +113,13 @@ spec:
 ```
 
 ## Deploy Crossplane resources for Memorystore, IAM, and S3
-- Deploy a resource of type `CloudMemorystoreInstance` to your cluster
+#### Deploy a resources of types `CloudMemorystoreInstance` and `Bucket` to your cluster
 ```sh
 kubectl apply -f gcp/memory_store.yaml
+kubectl apply -f aws/s3_bucket.yaml
 ```
 
-- Watch for changes and wait until the Postgres instance is ready
+#### Watch for changes and wait until the resources are ready
 ```sh
 kubectl get cloudmemorystoreinstance cymbal-memstore
 
