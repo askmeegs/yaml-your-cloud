@@ -3,3 +3,4 @@ aws-key.md
 trust.json
 gcp-creds.json
 aws-creds.conf
+aws.yaml
