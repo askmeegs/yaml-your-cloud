@@ -59,7 +59,6 @@ gcloud iam service-accounts create $NEW_SA_NAME --project ${PROJECT_ID}
 gcloud services enable redis.googleapis.com --project $PROJECT_ID
 
 # grant the service-account access to the cloud API and download service-account key
-```sh
 ROLE="roles/redis.admin"
 gcloud projects add-iam-policy-binding --role="$ROLE" ${PROJECT_ID} --member "serviceAccount:$SA"
 
@@ -130,4 +129,54 @@ kubectl get bucket.s3.aws.crossplane.io/cymbal-bucket
 NAME            READY   SYNCED   AGE
 cymbal-bucket   True    True     31s
 ```
+## Configure access control
+
+#### GCP
+
+```sh
+kubectl create namespace ${NAMESPACE}
+
+# if it doesnt already exist
+kubectl create namespace cymbal-shops
+kubectl create serviceaccount --namespace cymbal-shops cymbal-ksa
+echo "apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMServiceAccount
+metadata:
+  name: cymbal-gsa
+  namespace: ${NAMESPACE}
+spec:
+  displayName: cymbal-gsa" | kubectl apply -f -
+
+echo "apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicy
+metadata:
+  name: iampolicy-workload-identity-sample
+  namespace: ${NAMESPACE}
+spec:
+  resourceRef:
+    apiVersion: iam.cnrm.cloud.google.com/v1beta1
+    kind: IAMServiceAccount
+    name: cymbal-gsa
+  bindings:
+    - role: roles/iam.workloadIdentityUser
+      members:
+        - serviceAccount:yaml-your-cloud.svc.id.goog[cymbal-shops/cymbal-ksa]" | kubectl apply -f -
+
+kubectl get gcp -n ${NAMESPACE}
+kubectl annotate serviceaccount \
+  --namespace cymbal-shops \
+  cymbal-ksa \
+  iam.gke.io/gcp-service-account=cymbal-gsa@${PROJECT_ID}.iam.gserviceaccount.com
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+  --member "serviceAccount:cymbal-gsa@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role roles/redis.editor
+
+gcloud redis instances list --region us-central1
+
+# Update cymbal-shops.yaml with your Redis IP. (Line 414)
+kubectl apply -n cymbal-shops -f ../1-gcp/cymbal-shops.yaml
+```
+
+
 ## Verify Cymbal app functionality
