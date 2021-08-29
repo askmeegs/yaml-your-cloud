@@ -120,9 +120,14 @@ kubectl apply -f aws/s3_bucket.yaml
 
 #### Watch for changes and wait until the resources are ready
 ```sh
-kubectl get cloudmemorystoreinstance cymbal-memstore
+kubectl get cloudmemorystoreinstance.cache.gcp.crossplane.io/cymbal-memstore
 
 NAME              READY   SYNCED   STATE   VERSION     AGE
-cymbal-memstore   True    True     READY   REDIS_4_0   4m37s
+cymbal-memstore   True    True     READY   REDIS_4_0   16m
+
+kubectl get bucket.s3.aws.crossplane.io/cymbal-bucket
+
+NAME            READY   SYNCED   AGE
+cymbal-bucket   True    True     31s
 ```
 ## Verify Cymbal app functionality

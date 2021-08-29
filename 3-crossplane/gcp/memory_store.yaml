@@ -4,6 +4,8 @@ metadata:
   name: cymbal-memstore
   namespace: default
 spec:
+  providerConfigRef:
+    name: gcp-config
   forProvider:
     memorySizeGb: 2
     region: us-central1

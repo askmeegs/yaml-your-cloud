@@ -4,5 +4,8 @@ metadata:
   name: cymbal-bucket
   namespace: default
 spec:
+  providerConfigRef:
+    name: aws-config
   forProvider:
     locationConstraint: us-east-1
+    acl: private
