@@ -46,6 +46,15 @@ kubectl apply -f gcp/gcp_provider.yaml
 kubectl apply -f aws/aws_provider.yaml
 ```
 
+#### Wait for the providers to be ready
+```sh
+kubectl get provider
+
+NAME           INSTALLED   HEALTHY   PACKAGE                         AGE
+provider-aws   True        True      crossplane/provider-aws:alpha   27m
+provider-gcp   True        True      crossplane/provider-gcp:alpha   27m
+```
+
 ## Configure Crossplane provider in the cluster
 
 #### GCP
@@ -116,13 +125,6 @@ spec:
 kubectl apply -f gcp/memory_store.yaml
 kubectl apply -f aws/s3_bucket.yaml
 ```
-
-#### Wait for the providers to be ready
-```sh
-NAME           INSTALLED   HEALTHY   PACKAGE                         AGE
-provider-aws   True        True      crossplane/provider-aws:alpha   27m
-provider-gcp   True        True      crossplane/provider-gcp:alpha   27m
-```
 #### Watch for changes and wait until the resources are ready
 ```sh
 kubectl get cloudmemorystoreinstance.cache.gcp.crossplane.io/cymbal-memstore
@@ -137,52 +139,63 @@ cymbal-bucket   True    True     31s
 ```
 ## Configure access control
 
-#### GCP
+### Google Cloud Platform
 
+#### Create namespace where the workload will be deployed
 ```sh
-kubectl create namespace ${NAMESPACE}
-kubectl create namespace cymbal-shops # if it doesnt already exist
-kubectl annotate namespace ${NAMESPACE} cnrm.cloud.google.com/project-id=${PROJECT_ID}
+# this might already exist from the first demo
+kubectl create namespace cymbal-shops
+```
 
+#### Setup [workload-identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity#gcloud) to enable access to the memorystore from the workload
+```sh
+# create a kubernetes service account 'cymbal-ksa'
+# this might already exist from the first demo
 kubectl create serviceaccount --namespace cymbal-shops cymbal-ksa
-echo "apiVersion: iam.cnrm.cloud.google.com/v1beta1
-kind: IAMServiceAccount
-metadata:
-  name: cymbal-gsa
-  namespace: ${NAMESPACE}
-spec:
-  displayName: cymbal-gsa" | kubectl apply -f -
 
-echo "apiVersion: iam.cnrm.cloud.google.com/v1beta1
-kind: IAMPolicy
-metadata:
-  name: iampolicy-workload-identity-sample
-  namespace: ${NAMESPACE}
-spec:
-  resourceRef:
-    apiVersion: iam.cnrm.cloud.google.com/v1beta1
-    kind: IAMServiceAccount
-    name: cymbal-gsa
-  bindings:
-    - role: roles/iam.workloadIdentityUser
-      members:
-        - serviceAccount:yaml-your-cloud.svc.id.goog[cymbal-shops/cymbal-ksa]" | kubectl apply -f -
+# create a GCP IAM service account
+gcloud iam service-accounts create workload-id-sa
 
-kubectl get gcp -n ${NAMESPACE}
+# add IAM policy binding to enable editor access to memorystore
+gcloud projects add-iam-policy-binding yaml-shabirs-cloud \
+  --member "serviceAccount:workload-id-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role "roles/redis.editor"
+
+# create an IAM policy binding between the kubernetes service account and
+# the GCP IAM service account
+gcloud iam service-accounts add-iam-policy-binding \
+  --role roles/iam.workloadIdentityUser \
+  --member "serviceAccount:${PROJECT_ID}.svc.id.goog[cymbal-shops/cymbal-ksa]" \
+  workload-id-sa@${PROJECT_ID}.iam.gserviceaccount.com
+
+# annotate the kubernetes service account the IAM service account email
 kubectl annotate serviceaccount \
-  --namespace cymbal-shops \
-  cymbal-ksa \
-  iam.gke.io/gcp-service-account=cymbal-gsa@${PROJECT_ID}.iam.gserviceaccount.com
+  --namespace cymbal-shops cymbal-ksa \
+  iam.gke.io/gcp-service-account=workload-id-sa@${PROJECT_ID}.iam.gserviceaccount.com
+```
 
-gcloud projects add-iam-policy-binding ${PROJECT_ID} \
-  --member "serviceAccount:cymbal-gsa@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role roles/redis.editor
+### Amazon Web Services Platform
 
+
+
+## Verify App functionality
+
+### Cymbal App running on GCP
+
+#### Get the host IP of the memorystore created by Crossplane
+```sh
 gcloud redis instances list --region us-central1
+```
 
-# Update cymbal-shops.yaml with your Redis IP. (Line 414)
+#### Update cymbal-shops.yaml with your memorystore IP (Line 414) and deploy
+```sh
 kubectl apply -n cymbal-shops -f ../1-gcp/cymbal-shops.yaml
 ```
 
+#### Verify that the pods are running and access the frontend
+```sh
+kubectl get services/frontend-external -n cymbal-shops
 
-## Verify Cymbal app functionality
+NAME                TYPE           CLUSTER-IP     EXTERNAL-IP    PORT(S)        AGE
+frontend-external   LoadBalancer   10.96.15.201   34.70.143.34   80:31584/TCP   47m
+```
