@@ -119,7 +119,7 @@ spec:
       key: creds" | kubectl apply -f -
 ```
 
-## Deploy Crossplane resources for Memorystore, IAM, and S3
+## Deploy Crossplane resources for Memorystore and S3
 #### Deploy a resources of types `CloudMemorystoreInstance` and `Bucket` to your cluster
 ```sh
 kubectl apply -f gcp/memory_store.yaml
