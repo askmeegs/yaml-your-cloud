@@ -117,6 +117,12 @@ kubectl apply -f gcp/memory_store.yaml
 kubectl apply -f aws/s3_bucket.yaml
 ```
 
+#### Wait for the providers to be ready
+```sh
+NAME           INSTALLED   HEALTHY   PACKAGE                         AGE
+provider-aws   True        True      crossplane/provider-aws:alpha   27m
+provider-gcp   True        True      crossplane/provider-gcp:alpha   27m
+```
 #### Watch for changes and wait until the resources are ready
 ```sh
 kubectl get cloudmemorystoreinstance.cache.gcp.crossplane.io/cymbal-memstore
@@ -135,9 +141,9 @@ cymbal-bucket   True    True     31s
 
 ```sh
 kubectl create namespace ${NAMESPACE}
+kubectl create namespace cymbal-shops # if it doesnt already exist
+kubectl annotate namespace ${NAMESPACE} cnrm.cloud.google.com/project-id=${PROJECT_ID}
 
-# if it doesnt already exist
-kubectl create namespace cymbal-shops
 kubectl create serviceaccount --namespace cymbal-shops cymbal-ksa
 echo "apiVersion: iam.cnrm.cloud.google.com/v1beta1
 kind: IAMServiceAccount
