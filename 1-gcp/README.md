@@ -31,10 +31,15 @@ gcloud services enable redis.googleapis.com
 Create a GKE cluster with Workload Identity and Config Connector enabled.
 
 ```
-gcloud container clusters create "cymbal-shops" --zone "us-central1-c" \
---release-channel "regular" --machine-type "e2-standard-4" --num-nodes "4" \
+gcloud container clusters create "cymbal-shops" \
+--zone "us-central1-c" \
+--release-channel "regular" \
+--machine-type "e2-standard-4" \
+--num-nodes "4" \
 --addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver,ConfigConnector \
---workload-pool "${PROJECT_ID}.svc.id.goog" --enable-stackdriver-kubernetes
+--workload-pool "${PROJECT_ID}.svc.id.goog" \
+--enable-stackdriver-kubernetes \
+--enable-ip-alias
 ```
 
 ## Install Config Connector to GKE
