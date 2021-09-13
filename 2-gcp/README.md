@@ -1,34 +1,31 @@
-#  Part 1 - Managing Google Cloud Resources with Config Connector
+#  Part 2 - Managing Google Cloud Resources with Config Connector
 
 ![](/images/gcp.png)
 
-## Install prerequisites
+## Prerequisites 
 
-- gcloud SDK
-- kubectl
-- AWS CLI
+1. A Google Cloud Project with Billing enabled 
 
-## Create a GCP project
+## Demo 
 
-- Create a Google Cloud Project
-- Set up billing for your project
+### 1. Install tools 
+
+- `gcloud`: https://cloud.google.com/sdk/docs/install
+- `kubectl`: https://kubernetes.io/docs/tasks/tools/#kubectl
+
+### 2. Set variables, and enable Google Cloud APIs for GKE and Redis Memorystore.
 
 ```
 export PROJECT_ID="<your-project-id>"
-```
-
-- Enable APIs
-
-```
 gcloud config set project $PROJECT_ID
 
 gcloud services enable container.googleapis.com
 gcloud services enable redis.googleapis.com
 ```
 
-## Create a GKE Cluster
+### 3. Create a GKE Cluster. 
 
-Create a GKE cluster with Workload Identity and Config Connector enabled.
+This cluster has Workload Identity and Config Connector enabled.
 
 ```
 gcloud container clusters create "cymbal-shops" \
@@ -42,7 +39,7 @@ gcloud container clusters create "cymbal-shops" \
 --enable-ip-alias
 ```
 
-## Install Config Connector to GKE
+### 4. Install Config Connector to GKE
 
 - Connect to the cluster:
 
@@ -65,8 +62,7 @@ config-connector@${PROJECT_ID}.iam.gserviceaccount.com \
     --role="roles/iam.workloadIdentityUser"
 ```
 
-- Open `configconnector.yaml` in this directly. Replace `PROJECT_ID` with your project ID.
-
+- Open `configconnector.yaml` in this directory. Replace `PROJECT_ID` with your project ID.
 
 - Apply the install configuration to your cluster.
 
@@ -74,15 +70,14 @@ config-connector@${PROJECT_ID}.iam.gserviceaccount.com \
 kubectl apply -f configconnector.yaml
 ```
 
-- Determine what K8s namespace you'll deploy Config Connector resources into.
+- Set up the GKE namespace you'll deploy Config Connector resources into.
 
 ```
 kubectl create namespace config-connector-resources
-
 kubectl annotate namespace config-connector-resources cnrm.cloud.google.com/project-id=${PROJECT_ID}
 ```
 
-- Verify your installation.
+### 5 - Verify your Config Connector installation 
 
 ```
 kubectl wait -n cnrm-system --for=condition=Ready pod --all
@@ -98,7 +93,7 @@ pod/cnrm-webhook-manager-567789d76c-pbhpk condition met
 pod/cnrm-webhook-manager-567789d76c-thcj5 condition met
 ```
 
-## Set up GKE workload identity with Config Connector
+### 6 - Set up Workload Identity for GKE. 
 
 GKE Workload Identity is a mapping from a GCP IAM service account to a Kubernetes Service Account. You then assign IAM roles to your GCP service account which then apply to a K8s service account, mounted into a pod. This allows your Kubernetes workloads to have specific GCP permissions. In our case, we'll configure the GCP service account [from within Config Connector](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity#config-connector), then use that service account mapping to let the Cymbal Shops app (inside GKE) access Cloud Memorystore (in hosted GCP).
 
@@ -160,9 +155,9 @@ kubectl annotate serviceaccount \
   iam.gke.io/gcp-service-account=cymbal-gsa@${PROJECT_ID}.iam.gserviceaccount.com
 ```
 
-## Use Config Connector to create a Cloud Memorystore Instance
+### 7 - Use Config Connector to create a Cloud Memorystore Instance.
 
-Grant the `cymbal-gsa` Google service account `Cloud Memorystore` read-write permissions.
+- Grant the `cymbal-gsa` Google service account `Cloud Memorystore` read-write permissions.
 
 ```
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
@@ -170,19 +165,19 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID} \
   --role roles/redis.editor
 ```
 
-Use Config Connector to spin up a new [Cloud Memorystore Redis](https://cloud.google.com/config-connector/docs/reference/resource-docs/redis/redisinstance#sample_yamls) instance in your project.
+- Use Config Connector to spin up a new [Cloud Memorystore Redis](https://cloud.google.com/config-connector/docs/reference/resource-docs/redis/redisinstance#sample_yamls) instance in your project.
 
 ```
 kubectl apply -f memorystore-redis.yaml
 ```
 
-Verify that the Memorystore instance gets created. **Note** - this usually takes 3-5 minutes.
+- Verify that the Memorystore instance gets created. **Note** - this usually takes 3-5 minutes.
 
 ```
 kubectl get gcp
 ```
 
-Get the Redis IP for your cloud-hosted instance.
+- Get the Redis IP for your cloud-hosted instance.
 
 ```
 gcloud redis instances list --region us-central1
@@ -197,11 +192,11 @@ redis-cart     REDIS_5_0  us-central1  BASIC  1        10.243.8.75  6379  defaul
    2021-08-24T17:25:05
 ```
 
-Update `cymbal-shops.yaml` with your Redis IP. (Line 414)
+- Update `cymbal-shops.yaml` with your Redis IP. (Line 414)
 
-## Deploy the Cymbal Shops app to GKE
+### 8. Deploy the Cymbal Shops app to GKE
 
-Apply the Kubernetes manifests to deploy the Cymbal Shops app to the GKE cluster. Note that these workloads use the `cymbal-ksa` service account, meaning that `cartservice`, which talks to the Cloud Memorystore redis instance, has the permissions it needs (via Workload Identity) to talk to GCP.
+Apply the Kubernetes manifests to deploy the Cymbal Shops app to the GKE cluster. Note that these workloads use the `cymbal-ksa` service account, meaning that `cartservice`, which talks to the Cloud Memorystore Redis instance, has the permissions it needs (via Workload Identity) to talk to GCP.
 
 ```
 kubectl apply -n cymbal-shops -f cymbal-shops.yaml
@@ -209,4 +204,12 @@ kubectl apply -n cymbal-shops -f cymbal-shops.yaml
 
 Verify that pods are running.
 
-Access the frontend.
+```
+kubectl get pods -n cymbal-shops 
+```
+
+Access the frontend: 
+
+```
+kubectl get svc -n cymbal-shops
+```

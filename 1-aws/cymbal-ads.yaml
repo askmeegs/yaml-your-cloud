@@ -24,7 +24,7 @@ spec:
           - name: PORT
             value: "8080"
           - name: BUCKET_NAME
-            value: "cymbal-test-4"
+            value: "cymbal-test"
           resources:
             requests:
               cpu: 100m
