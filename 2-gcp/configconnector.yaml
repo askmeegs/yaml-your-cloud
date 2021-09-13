@@ -4,4 +4,4 @@ metadata:
   name: configconnector.core.cnrm.cloud.google.com
 spec:
   mode: cluster
-  googleServiceAccount: "config-connector@yaml-your-cloud.iam.gserviceaccount.com"
+  googleServiceAccount: "config-connector@PROJECT_ID.iam.gserviceaccount.com"

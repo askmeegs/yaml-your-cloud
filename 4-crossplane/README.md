@@ -1,4 +1,4 @@
-# Part 3 - Managing Multi-cloud resources with Crossplane
+# Part 4 - Managing Multi-cloud resources with Crossplane
 
 ## Pre-requisites
 - helm

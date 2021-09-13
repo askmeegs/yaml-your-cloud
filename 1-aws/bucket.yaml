@@ -1,7 +1,7 @@
 apiVersion: s3.services.k8s.aws/v1alpha1
 kind: Bucket
 metadata:
-  name: cymbal-test-4
+  name: cymbal-test
   namespace: ack-system
 spec:
-  name: cymbal-test-4
+  name: cymbal-test
